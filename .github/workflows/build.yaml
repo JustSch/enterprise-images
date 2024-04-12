@@ -9,7 +9,7 @@ on:
     branches:
       - main
 env:
-  ENDPOINT: "justsch/enterprise-images"
+  ENDPOINT: "justsch/coder-vnc"
   BRANCH: "main"
   # schedule:
   #   # Re-build all images at 2am UTC every Monday (8pm CST/9pm CDT)
