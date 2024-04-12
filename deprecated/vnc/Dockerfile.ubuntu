@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
   x11-apps \
   dbus-x11 \
   xterm \
-  python-numpy \
+  python3-numpy \
   firefox \
   fonts-lyx \
   libxtst6 \
