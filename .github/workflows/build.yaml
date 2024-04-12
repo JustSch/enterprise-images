@@ -57,8 +57,8 @@ jobs:
       - name: Tag image
         if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.ENDPOINT != 'user/endpoint' }}
         run: |
-          docker tag ${{ github.sha }} ghcr.io/JustSch/coder-vnc
-          docker tag ${{ github.sha }} ghcr.io/JustSch/coder-vnc:${{ github.sha }}
+          docker tag ${{ github.sha }} ghcr.io/${ENDPOINT}:coder-vnc
+          docker tag ${{ github.sha }} ghcr.io/${ENDPOINT}:${{ github.sha }}
 
       - name: Credential check
         if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.ENDPOINT != 'user/endpoint' }}
@@ -79,6 +79,6 @@ jobs:
       - name: Push tags to GitHub Container Registry
         if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.CR_USER && env.CR_PAT && env.ENDPOINT != 'user/endpoint' }}
         run: |
-            docker push ghcr.io/JustSch/coder-vnc:${{ github.sha }}
-            docker push ghcr.io/JustSch/coder-vnc
+            docker push ghcr.io/${ENDPOINT}:coder-vnc
+            docker push ghcr.io/${ENDPOINT}:${{ github.sha }}
 
