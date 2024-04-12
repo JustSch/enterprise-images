@@ -38,27 +38,6 @@ permissions:
   statuses: none
 
 jobs:
-  # Quick checks, running linters, checking formatting, etc
-  quick:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cancel previous runs
-        if: github.event_name == 'pull_request'
-        uses: styfle/cancel-workflow-action@0.12.1
-
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-
-      - name: Install Node.js modules
-        run: yarn install
-
-      - name: Check formatting
-        run: yarn format:check
 
   images:
     runs-on: ubuntu-latest
@@ -66,53 +45,39 @@ jobs:
       fail-fast: false
     name: images/ubuntu
     steps:
-      - name: Cancel previous runs
-        if: github.event_name == 'pull_request'
-        uses: styfle/cancel-workflow-action@0.12.1
-
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Trivy using install script
+      - name: Build image
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.37.1
+          docker build --no-cache -t ${{ github.sha }} ${{ github.workspace }}/deprecated/vnc/Dockerfile.ubuntu  
 
-      - name: Set up Depot CLI
-        uses: depot/setup-action@v1
 
-      - name: Build ubuntu images
+      - name: Tag image
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.ENDPOINT != 'user/endpoint' }}
         run: |
-          ${{ github.workspace }}/scripts/build_images.sh \
-            --tag=ubuntu
+          docker tag ${{ github.sha }} ghcr.io/JustSch/coder-vnc
+          docker tag ${{ github.sha }} ghcr.io/JustSch/coder-vnc:${{ github.sha }}
 
-      - name: Scan ubuntu images
+      - name: Credential check
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.ENDPOINT != 'user/endpoint' }}
         run: |
-          ${{ github.workspace }}/scripts/scan_images.sh \
-            --tag=ubuntu \
-            --output-file=trivy-results-ubuntu.sarif
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results-ubuntu.sarif
-          category: trivy-ubuntu
-
-      - name: Upload Trivy scan results as an artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-ubuntu
-          path: trivy-results-ubuntu.sarif
-          retention-days: 7
-
-      - name: Authenticate to Docker Hub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Push images to Docker Hub
-        if: github.event_name != 'pull_request'
+            echo "CR_USER=${{ secrets.CR_USER }}" >> $GITHUB_ENV
+            echo "CR_PAT=${{ secrets.CR_PAT }}" >> $GITHUB_ENV
+            if [[ "${{ secrets.CR_USER }}" == "" && "${{ secrets.CR_PAT }}" == ""  ]]; then
+              echo "::error::Push credential secrets missing."
+              echo "::error::You must set either CR_USER & CR_PAT"
+              exit 1
+            fi
+            
+      - name: Login to GitHub Container Registry
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.CR_USER && env.CR_PAT && env.ENDPOINT != 'user/endpoint' }}
         run: |
-          ${{ github.workspace }}/scripts/push_images.sh \
-            --tag=ubuntu
+            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ secrets.CR_USER }} --password-stdin
+  
+      - name: Push tags to GitHub Container Registry
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.CR_USER && env.CR_PAT && env.ENDPOINT != 'user/endpoint' }}
+        run: |
+            docker push ghcr.io/JustSch/coder-vnc:${{ github.sha }}
+            docker push ghcr.io/JustSch/coder-vnc
+
