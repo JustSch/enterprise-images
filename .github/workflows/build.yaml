@@ -8,7 +8,9 @@ on:
   pull_request:
     branches:
       - main
-
+env:
+  ENDPOINT: "justsch/ls-nextcloud-intel-gpu-transcoder"
+  BRANCH: "main"
   # schedule:
   #   # Re-build all images at 2am UTC every Monday (8pm CST/9pm CDT)
   #   #
@@ -54,11 +56,13 @@ jobs:
           docker build --no-cache -t ${{ github.sha }} -f Dockerfile.ubuntu  .
 
       - name: Tag image
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.ENDPOINT != 'user/endpoint' }}
         run: |
           docker tag ${{ github.sha }} ghcr.io/${ENDPOINT}
           docker tag ${{ github.sha }} ghcr.io/${ENDPOINT}:${{ github.sha }}
 
       - name: Credential check
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.ENDPOINT != 'user/endpoint' }}
         run: |
             echo "CR_USER=${{ secrets.CR_USER }}" >> $GITHUB_ENV
             echo "CR_PAT=${{ secrets.CR_PAT }}" >> $GITHUB_ENV
@@ -69,10 +73,12 @@ jobs:
             fi
             
       - name: Login to GitHub Container Registry
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.CR_USER && env.CR_PAT && env.ENDPOINT != 'user/endpoint' }}
         run: |
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ secrets.CR_USER }} --password-stdin
   
       - name: Push tags to GitHub Container Registry
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.CR_USER && env.CR_PAT && env.ENDPOINT != 'user/endpoint' }}
         run: |
             docker push ghcr.io/${ENDPOINT}
             docker push ghcr.io/${ENDPOINT}:${{ github.sha }}
