@@ -9,7 +9,7 @@ on:
     branches:
       - main
 env:
-  ENDPOINT: "justsch/ls-nextcloud-intel-gpu-transcoder"
+  ENDPOINT: "justsch/enterprise-images"
   BRANCH: "main"
   # schedule:
   #   # Re-build all images at 2am UTC every Monday (8pm CST/9pm CDT)
