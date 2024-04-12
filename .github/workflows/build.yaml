@@ -55,7 +55,7 @@ jobs:
 
       - name: Tag image
         run: |
-          docker tag ${{ github.sha }} ghcr.io/${ENDPOINT}:coder-vnc
+          docker tag ${{ github.sha }} ghcr.io/${ENDPOINT}:codervnc
           docker tag ${{ github.sha }} ghcr.io/${ENDPOINT}:${{ github.sha }}
 
       - name: Credential check
@@ -74,6 +74,6 @@ jobs:
   
       - name: Push tags to GitHub Container Registry
         run: |
-            docker push ghcr.io/${ENDPOINT}:coder-vnc
+            docker push ghcr.io/${ENDPOINT}:codervnc
             docker push ghcr.io/${ENDPOINT}:${{ github.sha }}
 
